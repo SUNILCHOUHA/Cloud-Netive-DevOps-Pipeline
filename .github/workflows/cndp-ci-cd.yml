@@ -1,180 +1,182 @@
-# name: CI/CD for CNDP
+name: CI/CD for CNDP
 
-# on:
-#   push:
-#     branches: [ "main" ]
+on:
+  push:
+    branches: [ "main" ]
 
-# jobs:
-#   #Job1 Build And Push
-#   build-images:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout Repository
-#         uses: actions/checkout@v4
+jobs:
+  #Job1 Build And Push
+  build-images:
+    environment: dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-#       - name: Login to Docker Hub
-#         uses: docker/login-action@v3 
-#         with:
-#           username: ${{ secrets.DOCKER_USER }}
-#           password: ${{ secrets.DOCKER_PASS }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3 
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASS }}
 
-#       - name:  Build and Push frontend
-#         working-directory: app/frontend
-#         run: | 
-#           IMAGE_TAG=${GITHUB_SHA}
-#           docker build -t sunilchouha/notes-app-frontend:$IMAGE_TAG .
-#           docker push sunilchouha/notes-app-frontend:$IMAGE_TAG
+      - name:  Build and Push frontend
+        working-directory: app/frontend
+        run: | 
+          IMAGE_TAG=${GITHUB_SHA}
+          docker build -t sunilchouha/notes-app-frontend:$IMAGE_TAG .
+          docker push sunilchouha/notes-app-frontend:$IMAGE_TAG
 
-#       - name: Build and Push backend
-#         working-directory: app/backend
-#         run: |
-#           IMAGE_TAG=${GITHUB_SHA}
-#           docker build -t sunilchouha/notes-app-backend:$IMAGE_TAG .
-#           docker push sunilchouha/notes-app-backend:$IMAGE_TAG
+      - name: Build and Push backend
+        working-directory: app/backend
+        run: |
+          IMAGE_TAG=${GITHUB_SHA}
+          docker build -t sunilchouha/notes-app-backend:$IMAGE_TAG .
+          docker push sunilchouha/notes-app-backend:$IMAGE_TAG
 
 
-#   #Job 2 Verify Cluster Creation issue
-#   build-artifact:
-#     runs-on: ubuntu-latest
-#     permissions:
-#       id-token: write
-#       contents: read
-#     environment: dev 
+  #Job 2 Verify Cluster Creation issue
+  build-artifact:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment: dev 
 
-#     steps:
-#       - name: Checkout Code 
-#         uses: actions/checkout@v4
+    steps:
+      - name: Checkout Code 
+        uses: actions/checkout@v4
 
-#       - name: Debug GitHub context
-#         run: |
-#           echo "Repository  = $GITHUB_REPOSITORY"
-#           echo "Ref         = $GITHUB_REF"
-#           echo "Event       = $GITHUB_EVENT_NAME"
-#           echo "Actor       = $GITHUB_ACTOR"
+      - name: Debug GitHub context
+        run: |
+          echo "Repository  = $GITHUB_REPOSITORY"
+          echo "Ref         = $GITHUB_REF"
+          echo "Event       = $GITHUB_EVENT_NAME"
+          echo "Actor       = $GITHUB_ACTOR"
 
-#       - name: Configure AWS credentials (OIDC)
-#         uses: aws-actions/configure-aws-credentials@v4
-#         with:
-#           role-to-assume: arn:aws:iam::954976311612:role/CI-CD-EKS
-#           aws-region: us-west-1
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::954976311612:role/CI-CD-EKS
+          aws-region: us-west-1
 
-#       - name: Terraform Setup
-#         uses: hashicorp/setup-terraform@v3 
+      - name: Terraform Setup
+        uses: hashicorp/setup-terraform@v3 
       
-#       - name: Terraform Initialize
-#         working-directory: terraform
-#         run: |
-#           terraform init
-#           terraform validate
+      - name: Terraform Initialize
+        working-directory: terraform
+        run: |
+          terraform init
+          terraform validate
         
-#       - name: Terraform Plan
-#         working-directory: terraform
-#         run: |
-#           terraform plan -out=tfplan
+      - name: Terraform Plan
+        working-directory: terraform
+        run: |
+          terraform plan -out=tfplan
 
-#       - name: Artifact Paln
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: tfplan
-#           path: terraform/tfplan
+      - name: Artifact Paln
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: terraform/tfplan
 
-#   #Job 3 Create Cluster
-#   deploy-artifact:
-#     needs: build-artifact
-#     runs-on: ubuntu-latest
-#     permissions:
-#       id-token: write
-#       contents: read
-#     environment: dev 
-#     steps:
-#       - name: Checkout code 
-#         uses: actions/checkout@v4 
+  #Job 3 Create Cluster
+  deploy-artifact:
+    needs: build-artifact
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment: dev 
+    steps:
+      - name: Checkout code 
+        uses: actions/checkout@v4 
 
-#       - name: Configure AWS credentials (OIDC)
-#         uses: aws-actions/configure-aws-credentials@v4
-#         with:
-#           role-to-assume: arn:aws:iam::954976311612:role/CI-CD-EKS
-#           aws-region: us-west-1
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::954976311612:role/CI-CD-EKS
+          aws-region: us-west-1
 
-#       - name: Terraform Setup
-#         uses: hashicorp/setup-terraform@v3
+      - name: Terraform Setup
+        uses: hashicorp/setup-terraform@v3
 
-#       - name: Download Artifact
-#         uses: actions/download-artifact@v4 
-#         with:
-#           name: tfplan
-#           path: terraform/
+      - name: Download Artifact
+        uses: actions/download-artifact@v4 
+        with:
+          name: tfplan
+          path: terraform/
 
-#       - name: Terraform Initialize
-#         working-directory: terraform
-#         run: |
-#           terraform init
-#           terraform validate 
+      - name: Terraform Initialize
+        working-directory: terraform
+        run: |
+          terraform init
+          terraform validate 
         
-#       - name: Terraform Apply
-#         working-directory: terraform
-#         run: terraform apply -auto-approve tfplan
+      - name: Terraform Apply
+        working-directory: terraform
+        run: terraform apply -auto-approve tfplan
 
 
 
-#   #Job 4 Deploy application
-#   app-deploy: 
-#     runs-on: ubuntu-latest
-#     needs: build-images
-#     permissions:
-#       id-token: write
-#       contents: read
+  #Job 4 Deploy application
+  app-deploy: 
+    environment: dev
+    runs-on: ubuntu-latest
+    needs: build-images
+    permissions:
+      id-token: write
+      contents: read
 
-#     steps:
-#       - name: Checkout Repository
-#         uses: actions/checkout@v4 
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4 
       
-#       - name: Configure AWS credentials
-#         uses: aws-actions/configure-aws-credentials@v4
-#         with:
-#           role-to-assume: arn:aws:iam::954976311612:role/CI-CD-EKS
-#           aws-region: us-west-1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::954976311612:role/CI-CD-EKS
+          aws-region: us-west-1
 
-#       - name: Install kubectl
-#         run: |
-#           curl -LO https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
-#           chmod +x kubectl
-#           sudo mv kubectl /usr/local/bin/
+      - name: Install kubectl
+        run: |
+          curl -LO https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
 
-#       - name: Login or Access EKS Cluster
-#         run: |
-#           aws eks --region us-east-1 update-kubeconfig --name DevOps-EKS-Cluster
-#           kubectl get nodes
+      - name: Login or Access EKS Cluster
+        run: |
+          aws eks --region us-east-1 update-kubeconfig --name DevOps-EKS-Cluster
+          kubectl get nodes
 
-#       - name: Update image tags in manifests
-#         run: |
-#           IMAGE_TAG=${GITHUB_SHA}
-#           sed -i "s|IMAGE_TAG|$IMAGE_TAG|g" k8s-manifest/backend-k8s/deploy.yml
-#           sed -i "s|IMAGE_TAG|$IMAGE_TAG|g" k8s-manifest/frontend-k8s/deploy.yml
+      - name: Update image tags in manifests
+        run: |
+          IMAGE_TAG=${GITHUB_SHA}
+          sed -i "s|IMAGE_TAG|$IMAGE_TAG|g" k8s-manifest/backend-k8s/deploy.yml
+          sed -i "s|IMAGE_TAG|$IMAGE_TAG|g" k8s-manifest/frontend-k8s/deploy.yml
 
 
-#       - name: Create Namespace 
-#         working-directory: k8s-manifest
-#         run: kubectl apply -f ns.yml
+      - name: Create Namespace 
+        working-directory: k8s-manifest
+        run: kubectl apply -f ns.yml
 
-#       - name: Apply 3-tier App Backend
-#         working-directory: k8s-manifest/backend-k8s
-#         run: |
-#           kubectl apply -f deploy.yml
-#           kubectl apply -f service.yml
+      - name: Apply 3-tier App Backend
+        working-directory: k8s-manifest/backend-k8s
+        run: |
+          kubectl apply -f deploy.yml
+          kubectl apply -f service.yml
 
-#       - name: Apply 3-tier App Frontend 
-#         working-directory: k8s-manifest/frontend-k8s
-#         run: |
-#           kubectl apply -f deploy.yml
-#           kubectl apply -f service.yml
+      - name: Apply 3-tier App Frontend 
+        working-directory: k8s-manifest/frontend-k8s
+        run: |
+          kubectl apply -f deploy.yml
+          kubectl apply -f service.yml
 
-#       - name: Apply 3-tier App Database 
-#         working-directory: k8s-manifest/database-k8s
-#         run: |
-#           kubectl apply -f deploy.yml
-#           kubectl apply -f service.yml
+      - name: Apply 3-tier App Database 
+        working-directory: k8s-manifest/database-k8s
+        run: |
+          kubectl apply -f deploy.yml
+          kubectl apply -f service.yml
 
-#       - name: Apply Ingerss
-#         working-directory: k8s-manifest
-#         run: kubectl apply -f ingress.yml
+      - name: Apply Ingerss
+        working-directory: k8s-manifest
+        run: kubectl apply -f ingress.yml
