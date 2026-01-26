@@ -1,0 +1,27 @@
+name: destroy-Cluster
+on:
+  workflow_dispatch:
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    env: destroy
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4 
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::954976311612:role/CI-CD-EKS
+          aws-region: us-west-1
+
+      - name: Terraform Setup
+        uses: hashicorp/setup-terraform@v3 
+      
+      - name: terraform destroy 
+        working-directory: terraform
+        run: terraform destroy
