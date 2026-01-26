@@ -20,14 +20,14 @@ jobs:
           password: ${{ secrets.DOCKER_PASS }}
 
       - name:  Build and Push frontend
-        working-directory: frontend
+        working-directory: app/frontend
         run: | 
           IMAGE_TAG=${GITHUB_SHA}
           docker build -t sunilchouha/notes-app-frontend:$IMAGE_TAG .
           docker push sunilchouha/notes-app-frontend:$IMAGE_TAG
 
       - name: Build and Push backend
-        working-directory: backend
+        working-directory: app/backend
         run: |
           IMAGE_TAG=${GITHUB_SHA}
           docker build -t sunilchouha/notes-app-backend:$IMAGE_TAG .
@@ -144,19 +144,19 @@ jobs:
         run: kubectl apply -f ns.yml
 
       - name: Apply 3-tier App Backend
-        working-directory: backend-k8s
+        working-directory: k8s-manifest/backend-k8s
         run: |
           kubectl apply -f deploy.yml
           kubectl apply -f service.yml
 
       - name: Apply 3-tier App Frontend 
-        working-directory: frontend-k8s
+        working-directory: k8s-manifest/frontend-k8s
         run: |
           kubectl apply -f deploy.yml
           kubectl apply -f service.yml
 
       - name: Apply 3-tier App Database 
-        working-directory: database-k8s
+        working-directory: k8s-manifest/database-k8s
         run: |
           kubectl apply -f deploy.yml
           kubectl apply -f service.yml
