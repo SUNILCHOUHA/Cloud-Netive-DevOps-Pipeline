@@ -152,8 +152,8 @@ jobs:
       - name: Update image tags in manifests
         run: |
           IMAGE_TAG=${GITHUB_SHA}
-          sed -i "s|IMAGE_TAG|$IMAGE_TAG|g" backend-k8s/deploy.yml
-          sed -i "s|IMAGE_TAG|$IMAGE_TAG|g" frontend-k8s/deploy.yml
+          sed -i "s|IMAGE_TAG|$IMAGE_TAG|g" k8s-manifest/backend-k8s/deploy.yml
+          sed -i "s|IMAGE_TAG|$IMAGE_TAG|g" k8s-manifest/frontend-k8s/deploy.yml
 
 
       - name: Create Namespace 
