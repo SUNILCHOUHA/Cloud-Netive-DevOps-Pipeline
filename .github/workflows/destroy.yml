@@ -1,6 +1,8 @@
 name: destroy-Cluster
 on:
-  workflow_dispatch:
+  push: 
+    branches:
+      - main
 
 jobs:
   destroy:
