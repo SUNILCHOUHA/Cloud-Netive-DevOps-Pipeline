@@ -3,6 +3,7 @@ name: CI/CD for CNDP
 on:
   push:
     branches: [ "main" ]
+  workflow-dispatch:
 
 jobs:
   #Job1 Build And Push
@@ -41,6 +42,7 @@ jobs:
       id-token: write
       contents: read
     environment: dev 
+    if: github.event_name == 'workflow-dispatch'
 
     steps:
       - name: Checkout Code 
@@ -83,6 +85,7 @@ jobs:
   deploy-artifact:
     needs: build-artifact
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow-dispatch'
     permissions:
       id-token: write
       contents: read
