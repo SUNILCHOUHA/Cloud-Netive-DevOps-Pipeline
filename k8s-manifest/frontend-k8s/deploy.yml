@@ -18,6 +18,6 @@ spec:
     spec: 
       containers:
       - name: frontend
-        image: sunilchouha/notes-app-frontend:IMAGE_TAG
+        image: sunilchouha/notes-app-frontend
         ports:
-        - containerPort: 5000
+        - containerPort: 8080

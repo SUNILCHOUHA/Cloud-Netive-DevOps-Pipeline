@@ -1,7 +1,9 @@
+const API = "http://backend:5000";   // Docker container name
+
 async function addNote() {
   const text = document.getElementById("note").value;
 
-  await fetch("/api/notes", {
+  await fetch(`${API}/api/notes`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ note: text })
@@ -11,7 +13,7 @@ async function addNote() {
 }
 
 async function loadNotes() {
-  const res = await fetch("/api/notes");
+  const res = await fetch(`${API}/api/notes`);
   const data = await res.json();
 
   const list = document.getElementById("notes");

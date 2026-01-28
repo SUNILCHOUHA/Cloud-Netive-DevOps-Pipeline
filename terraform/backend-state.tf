@@ -14,8 +14,8 @@ terraform {
     bucket         = "backend-state-eks"
     key            = "terraform/terraform.tfstate"
     region         = "us-east-1"
-    use_lockfile = true
-    # dynamodb_table = "State-lock"
+    # use_lockfile = true
+    dynamodb_table = "State-lock"
     encrypt        = true
   }
 }

@@ -59,7 +59,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::954976311612:role/CI-CD-EKS
-          aws-region: us-west-1
+          aws-region: us-east-1
 
       - name: Terraform Setup
         uses: hashicorp/setup-terraform@v3 
@@ -98,7 +98,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::954976311612:role/CI-CD-EKS
-          aws-region: us-west-1
+          aws-region: us-east-1
 
       - name: Terraform Setup
         uses: hashicorp/setup-terraform@v3
@@ -125,7 +125,9 @@ jobs:
   app-deploy: 
     environment: dev
     runs-on: ubuntu-latest
-    needs: build-images
+    needs: 
+      - build-images
+      - deploy-artifact
     permissions:
       id-token: write
       contents: read
@@ -138,7 +140,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::954976311612:role/CI-CD-EKS
-          aws-region: us-west-1
+          aws-region: us-east-1
 
       - name: Install kubectl
         run: |
@@ -179,6 +181,9 @@ jobs:
         run: |
           kubectl apply -f deploy.yml
           kubectl apply -f service.yml
+
+      - name: Ingress Install 
+        run: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
 
       - name: Apply Ingerss
         working-directory: k8s-manifest

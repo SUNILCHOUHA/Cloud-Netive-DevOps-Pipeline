@@ -1,3 +1,7 @@
+provider "aws" {
+  region = "us-east-1"
+}
+
 resource "aws_dynamodb_table" "basic-dynamodb-table" {
   name         = "State-lock"
   billing_mode = "PAY_PER_REQUEST"

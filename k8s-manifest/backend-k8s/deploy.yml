@@ -18,7 +18,7 @@ spec:
     spec: 
       containers:
       - name: backend
-        image: sunilchouha/notes-app-backend:IMAGE_TAG
+        image: sunilchouha/notes-app-backend
         ports:
-        - containerPort: 80
+        - containerPort: 5000
         

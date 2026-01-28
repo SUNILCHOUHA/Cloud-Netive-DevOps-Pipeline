@@ -19,6 +19,11 @@ spec:
       containers:
       - name: database
         image: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "root123"
+        - name: MYSQL_DATABASE
+          value: "notesdb"
         ports:
         - containerPort: 3306
         
