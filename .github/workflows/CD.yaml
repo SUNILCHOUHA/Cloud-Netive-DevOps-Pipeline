@@ -50,7 +50,6 @@ jobs:
 
 
       - name: Generate Alertmanager Config
-        working-directory: gitops-k8s/monitoring 
         run: |
           cat > alertmanager.yaml << EOF
           global:
