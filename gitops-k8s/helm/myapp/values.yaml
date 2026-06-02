@@ -25,7 +25,6 @@ database:
   name: employee_db
   port: 5432
   user: postgres
-  password: postgres123
-
+  
 autoscaling:
   enabled: false

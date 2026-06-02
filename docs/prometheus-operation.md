@@ -1,236 +1,150 @@
 # Prometheus Operations Guide
 
-This document contains Prometheus architecture, operational commands, ArgoCD reconciliation procedures, troubleshooting steps, and commonly used PromQL queries used in this project.
-
----
-
-# Overview
-
-Prometheus is the primary monitoring solution used in this project.
-
-It collects metrics from:
-
-* Kubernetes Nodes
-* Pods
-* Deployments
-* Services
-* Applications
-* Node Exporter
-* kube-state-metrics
-
-The collected metrics are stored as time-series data and visualized through Grafana dashboards.
+This document explains the monitoring, alerting, logging, dashboards, and operational procedures used in the Cloud Native DevOps Pipeline project.
 
 ---
 
 # Monitoring Architecture
 
+The project uses the following observability stack:
+
 ```text
-Node Exporter
-      ↓
 Prometheus
-      ↓
-Grafana
+    ↓
+Alertmanager
+    ↓
+Email Notifications
 
 Prometheus
-      ↓
-Alertmanager
-      ↓
-Slack
+    ↓
+Grafana
+    ↓
+Dashboards
+
+Promtail
+    ↓
+Loki
+    ↓
+Grafana
 ```
 
 ---
 
-# Core Components
+# Components Overview
 
 ## Prometheus
 
 Responsibilities:
 
 * Metrics Collection
-* Metrics Storage
+* Time Series Storage
+* PromQL Query Engine
 * Alert Evaluation
-* PromQL Query Processing
+
+Collects metrics from:
+
+* Kubernetes Nodes
+* Pods
+* Containers
+* Applications
+* kube-state-metrics
+* Node Exporter
 
 ---
 
-## Prometheus Operator
+## Alertmanager
 
 Responsibilities:
 
-* Prometheus Resource Management
-* Alertmanager Resource Management
-* ServiceMonitor Management
-* PrometheusRule Management
-* Operator Reconciliation
+* Alert Processing
+* Alert Grouping
+* Alert Routing
+* Email Notifications
+
+Configured using Gmail SMTP.
+
+Example Alerts:
+
+* High CPU Usage
+* High Memory Usage
+* Pod Restarts
+* Node Down
 
 ---
 
-## Node Exporter
+## Grafana
 
-Provides:
+Responsibilities:
 
-* CPU Metrics
-* Memory Metrics
-* Disk Metrics
-* Network Metrics
-
----
-
-## kube-state-metrics
-
-Provides Kubernetes object metrics such as:
-
-* Pods
-* Deployments
-* StatefulSets
-* Nodes
-* Namespaces
+* Dashboard Visualization
+* Alert Analysis
+* Metrics Exploration
+* Log Visualization
 
 ---
 
-# Operational Commands
+## Loki
 
-## Check Monitoring Pods
+Responsibilities:
+
+* Log Aggregation
+* Log Storage
+* Log Querying
+
+---
+
+## Promtail
+
+Responsibilities:
+
+* Log Collection
+* Kubernetes Pod Log Shipping
+* Log Forwarding to Loki
+
+---
+
+# Monitoring Stack Verification
+
+Check Monitoring Pods:
 
 ```bash
 kubectl get pods -n monitoring
 ```
 
-### Purpose
-
-Verify all monitoring components are running correctly.
-
 Expected Components:
 
-* Prometheus
-* Grafana
-* Alertmanager
-* Prometheus Operator
-* Node Exporter
-* kube-state-metrics
-* Loki
-* Promtail
+```text
+prometheus
+grafana
+alertmanager
+prometheus-operator
+node-exporter
+kube-state-metrics
+loki
+promtail
+```
 
 ---
 
-## Check Prometheus Resource
+# Access Grafana
+
+Port Forward:
 
 ```bash
-kubectl get prometheus -A
+kubectl port-forward svc/prometheus-grafana \
+-n monitoring \
+3000:80
 ```
 
-### Purpose
-
-Verify that Prometheus Custom Resource exists.
-
-Expected:
+Access:
 
 ```text
-NAMESPACE    NAME
-monitoring   prometheus-kube-prometheus-prometheus
+http://localhost:3000
 ```
 
 ---
 
-## Check Alertmanager Resource
-
-```bash
-kubectl get alertmanager -A
-```
-
-### Purpose
-
-Verify that Alertmanager Custom Resource exists.
-
-Expected:
-
-```text
-NAMESPACE    NAME
-monitoring   prometheus-kube-prometheus-alertmanager
-```
-
----
-
-## Check Operator Status
-
-```bash
-kubectl get deployment \
-prometheus-kube-prometheus-operator \
--n monitoring
-```
-
-### Purpose
-
-Verify Prometheus Operator is healthy.
-
----
-
-## View Operator Logs
-
-```bash
-kubectl logs deployment/prometheus-kube-prometheus-operator \
--n monitoring
-```
-
-### Purpose
-
-Used for troubleshooting:
-
-* Missing CRDs
-* Reconciliation Failures
-* Permission Issues
-* Configuration Problems
-
----
-
-## Restart Prometheus Operator
-
-```bash
-kubectl rollout restart deployment \
-prometheus-kube-prometheus-operator \
--n monitoring
-```
-
-### Purpose
-
-Forces Prometheus Operator to reconcile resources again.
-
-Used after:
-
-* CRD installation
-* Configuration changes
-* Recovery procedures
-
----
-
-# Verify Prometheus Operator CRDs
-
-```bash
-kubectl get crd | grep monitoring.coreos.com
-```
-
-Expected:
-
-```text
-alertmanagerconfigs.monitoring.coreos.com
-alertmanagers.monitoring.coreos.com
-podmonitors.monitoring.coreos.com
-probes.monitoring.coreos.com
-prometheusagents.monitoring.coreos.com
-prometheuses.monitoring.coreos.com
-prometheusrules.monitoring.coreos.com
-scrapeconfigs.monitoring.coreos.com
-servicemonitors.monitoring.coreos.com
-thanosrulers.monitoring.coreos.com
-```
-
-### Why Important
-
-Prometheus and Alertmanager resources cannot exist without these CRDs.
-
----
-
-# Access Prometheus UI
+# Access Prometheus
 
 ```bash
 kubectl port-forward \
@@ -245,200 +159,111 @@ Access:
 http://localhost:9090
 ```
 
-Used for:
-
-* PromQL Queries
-* Alert Inspection
-* Target Validation
-
 ---
 
-# Access Grafana
+# Prometheus Targets Verification
 
-```bash
-kubectl port-forward \
-svc/prometheus-grafana \
--n monitoring \
-3000:80
-```
-
-Access:
+Open:
 
 ```text
-http://localhost:3000
+Status → Targets
 ```
 
-Used for:
-
-* Dashboards
-* Metrics Visualization
-* Logs Exploration
-* Alert Monitoring
-
----
-
-# ArgoCD Operations
-
-## Check ArgoCD Applications
-
-```bash
-kubectl get apps -n argocd
-```
-
-Expected:
+All targets should show:
 
 ```text
-NAME         SYNC STATUS   HEALTH STATUS
-myapp        Synced        Healthy
-prometheus   Synced        Healthy
-loki         Synced        Healthy
-promtail     Synced        Healthy
+UP
 ```
+
+Important Targets:
+
+* kube-state-metrics
+* node-exporter
+* prometheus
+* alertmanager
 
 ---
 
-## Hard Refresh Application
+# Important PromQL Queries
 
-```bash
-kubectl annotate application prometheus \
--n argocd \
-argocd.argoproj.io/refresh=hard \
---overwrite
+## CPU Usage %
+
+```promql
+100 - (
+avg by(instance)
+(rate(node_cpu_seconds_total{mode="idle"}[5m]))
+* 100
+)
 ```
 
-### Purpose
+Purpose:
 
-Forces ArgoCD to refresh application state and re-evaluate all resources.
+Calculates CPU utilization percentage.
 
-### Use Cases
-
-* After installing CRDs
-* After fixing Operator issues
-* Resources not syncing
-* Unexpected OutOfSync status
-
----
-
-## Force Sync Application
-
-```bash
-kubectl patch application prometheus \
--n argocd \
---type merge \
--p '{"operation":{"initiatedBy":{"username":"admin"},"sync":{"syncStrategy":{"hook":{}}}}}'
-```
-
-### Purpose
-
-Triggers a manual synchronization.
-
-### Use Cases
-
-* Resources not created
-* Drift detected
-* Manual reconciliation required
-
----
-
-# Prometheus Operator CRD Recovery
-
-## Symptoms
+Example:
 
 ```text
-No resources found
-```
-
-or
-
-```text
-no matches for kind "Prometheus"
-```
-
-or
-
-```text
-no matches for kind "Alertmanager"
+Idle = 95%
+CPU Usage = 5%
 ```
 
 ---
 
-## Root Cause
+## Memory Usage %
 
-Prometheus Operator CRDs are missing.
-
----
-
-## Resolution
-
-Install Missing CRDs:
-
-```bash
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.83.0/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml
-
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.83.0/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml
-
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.83.0/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml
-
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.83.0/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml
-
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.83.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheusagents.yaml
-
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.83.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml
-
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.83.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
-
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.83.0/example/prometheus-operator-crd/monitoring.coreos.com_scrapeconfigs.yaml
-
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.83.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
-
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.83.0/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml
+```promql
+(
+1 -
+(
+node_memory_MemAvailable_bytes
+/
+node_memory_MemTotal_bytes
+)
+) * 100
 ```
 
-Restart Operator:
+Purpose:
 
-```bash
-kubectl rollout restart deployment \
-prometheus-kube-prometheus-operator \
--n monitoring
-```
+Calculates RAM usage percentage.
 
-Hard Refresh ArgoCD:
-
-```bash
-kubectl annotate application prometheus \
--n argocd \
-argocd.argoproj.io/refresh=hard \
---overwrite
-```
-
-Verify:
-
-```bash
-kubectl get prometheus -A
-
-kubectl get alertmanager -A
-
-kubectl get pods -n monitoring
-```
-
-Expected:
+Example:
 
 ```text
-prometheus-prometheus-kube-prometheus-prometheus-0
-alertmanager-prometheus-kube-prometheus-alertmanager-0
+Total Memory = 8 GB
+Available = 2 GB
+
+Used = 6 GB
+
+Usage = 75%
 ```
 
 ---
 
-# Common PromQL Queries
+## Disk Usage %
 
-## Target Availability
+```promql
+100 -
+(
+node_filesystem_avail_bytes
+/
+node_filesystem_size_bytes
+* 100
+)
+```
+
+Purpose:
+
+Monitors filesystem utilization.
+
+---
+
+## Node Availability
 
 ```promql
 up
 ```
 
-Result:
+Output:
 
 ```text
 1 = Healthy
@@ -447,67 +272,487 @@ Result:
 
 ---
 
-## Running Pods
+## Container Restarts
 
 ```promql
-count(kube_pod_status_phase{phase="Running"})
+kube_pod_container_status_restarts_total
 ```
 
-Returns total running pods.
+Purpose:
+
+Tracks container restart count.
 
 ---
 
-## Node Count
+## Pod Count
 
 ```promql
-count(kube_node_info)
+count(kube_pod_info)
 ```
 
-Returns total Kubernetes worker nodes.
+Purpose:
+
+Displays total running pods.
 
 ---
 
-## Pod Restart Count
+## Network Receive
 
 ```promql
-sum(kube_pod_container_status_restarts_total)
+rate(node_network_receive_bytes_total[5m])
 ```
 
-Identifies unstable workloads.
+Purpose:
+
+Network incoming traffic.
 
 ---
 
-## Memory Usage
+## Network Transmit
 
 ```promql
-(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)
+rate(node_network_transmit_bytes_total[5m])
 ```
 
-Displays currently consumed memory.
+Purpose:
+
+Network outgoing traffic.
 
 ---
 
-## CPU Usage
+# Alerting Configuration
 
-```promql
-100 - (
-avg by(instance)
-(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100
-)
+Alerting Flow:
+
+```text
+Prometheus
+    ↓
+PrometheusRule
+    ↓
+Alertmanager
+    ↓
+Gmail SMTP
+    ↓
+Email Notification
 ```
-
-Displays CPU utilization percentage.
 
 ---
 
-# Key Learnings
+# Sample Alert Rule
 
-* Prometheus uses a pull-based monitoring model.
-* Prometheus Operator depends on CRDs.
-* ServiceMonitors control target discovery.
-* PromQL is used for querying metrics.
-* Alertmanager handles alert routing.
-* Grafana provides visualization and troubleshooting.
-* Missing CRDs can prevent Prometheus and Alertmanager creation.
-* Understanding Operator reconciliation is critical in Kubernetes environments.
-* ArgoCD Hard Refresh is useful when resources are not reconciled after dependency fixes.
+```yaml
+- alert: HighCPUUsage
+
+  expr: |
+    100 -
+    (
+      avg by(instance)
+      (
+        rate(
+          node_cpu_seconds_total{mode="idle"}[5m]
+        )
+      ) * 100
+    ) > 5
+
+  for: 30s
+
+  labels:
+    severity: warning
+
+  annotations:
+    summary: High CPU Usage
+    description: CPU usage is above 5%
+```
+
+---
+
+# Alert States
+
+## Inactive
+
+Condition not met.
+
+```text
+No Alert
+```
+
+---
+
+## Pending
+
+Condition met but waiting for:
+
+```yaml
+for: 30s
+```
+
+---
+
+## Firing
+
+Condition remains true after waiting period.
+
+Email notification sent.
+
+---
+
+# Alert Verification
+
+Check Rules:
+
+```bash
+kubectl get prometheusrules -n monitoring
+```
+
+Check Alerts:
+
+```text
+Prometheus
+↓
+Alerts
+```
+
+Possible States:
+
+```text
+Inactive
+Pending
+Firing
+```
+
+---
+
+# Alertmanager Verification
+
+Verify Alertmanager Pods:
+
+```bash
+kubectl get pods -n monitoring
+```
+
+Check Logs:
+
+```bash
+kubectl logs \
+alertmanager-prometheus-kube-prometheus-alertmanager-0 \
+-n monitoring
+```
+
+---
+
+# Verify Active Configuration
+
+```bash
+kubectl exec -it \
+alertmanager-prometheus-kube-prometheus-alertmanager-0 \
+-n monitoring -- sh
+```
+
+```bash
+cat /etc/alertmanager/config_out/alertmanager.env.yaml
+```
+
+Verify:
+
+```text
+smtp_smarthost
+smtp_auth_username
+gmail-alerts
+```
+
+are present.
+
+---
+
+# Logging Architecture
+
+```text
+Application Logs
+        ↓
+Promtail
+        ↓
+Loki
+        ↓
+Grafana
+```
+
+---
+
+# Verify Loki
+
+```bash
+kubectl get pods -n monitoring
+```
+
+Expected:
+
+```text
+loki
+```
+
+Running.
+
+---
+
+# Verify Promtail
+
+```bash
+kubectl get pods -n monitoring
+```
+
+Expected:
+
+```text
+promtail
+```
+
+Running.
+
+---
+
+# Grafana Dashboards
+
+The project includes custom dashboards.
+
+---
+
+## Cluster Health Dashboard
+
+Metrics:
+
+* Total Nodes
+* Total Pods
+* Container Restarts
+* Average CPU Usage
+
+Purpose:
+
+Cluster overview.
+
+---
+
+## Node Monitoring Dashboard
+
+Metrics:
+
+* CPU Usage
+* Memory Usage
+* Disk Usage
+* Network Traffic
+
+Purpose:
+
+Node-level monitoring.
+
+---
+
+## Application Dashboard
+
+Metrics:
+
+* Frontend CPU
+* Backend CPU
+* Frontend Memory
+* Backend Memory
+* Pod Restarts
+
+Purpose:
+
+Application monitoring.
+
+---
+
+## GitOps Dashboard
+
+Metrics:
+
+* ArgoCD Pods
+* ArgoCD Resource Usage
+* ArgoCD Restarts
+
+Purpose:
+
+GitOps visibility.
+
+---
+
+## Logging Dashboard
+
+Metrics:
+
+* API Request Rate
+* Error Count
+* Backend Logs
+* Monitoring Stack Logs
+
+Purpose:
+
+Centralized log analysis.
+
+---
+
+# Operational Commands
+
+## Check Monitoring Resources
+
+```bash
+kubectl get all -n monitoring
+```
+
+---
+
+## Check Prometheus Rules
+
+```bash
+kubectl get prometheusrules -n monitoring
+```
+
+---
+
+## Check ServiceMonitors
+
+```bash
+kubectl get servicemonitors -n monitoring
+```
+
+---
+
+## Check Targets
+
+```bash
+kubectl port-forward \
+svc/prometheus-kube-prometheus-prometheus \
+-n monitoring \
+9090:9090
+```
+
+Navigate:
+
+```text
+Status → Targets
+```
+
+---
+
+## Restart Prometheus
+
+```bash
+kubectl rollout restart statefulset \
+prometheus-prometheus-kube-prometheus-prometheus \
+-n monitoring
+```
+
+---
+
+## Restart Alertmanager
+
+```bash
+kubectl rollout restart statefulset \
+alertmanager-prometheus-kube-prometheus-alertmanager \
+-n monitoring
+```
+
+---
+
+## Restart Operator
+
+```bash
+kubectl rollout restart deployment \
+prometheus-kube-prometheus-operator \
+-n monitoring
+```
+
+---
+
+# Troubleshooting
+
+## CRD Missing
+
+Symptoms:
+
+```text
+no matches for kind
+```
+
+Resolution:
+
+```bash
+kubectl get crd | grep monitoring.coreos.com
+```
+
+Ensure Prometheus Operator CRDs are installed before deploying Prometheus.
+
+---
+
+## CRD Installation Error
+
+Symptoms:
+
+```text
+metadata.annotations: Too long
+```
+
+Resolution:
+
+```bash
+kubectl apply --server-side -f .
+```
+
+or
+
+```yaml
+syncOptions:
+  - ServerSideApply=true
+```
+
+---
+
+## Alert Emails Not Received
+
+Check:
+
+* Gmail App Password
+* SMTP Credentials
+* Alertmanager Logs
+* Alertmanager Active Config
+
+Verify:
+
+```bash
+cat /etc/alertmanager/config_out/alertmanager.env.yaml
+```
+
+---
+
+## Application Healthy but Sync Failed
+
+Possible Cause:
+
+Historical ArgoCD Sync Failure.
+
+Verify:
+
+```bash
+kubectl get applications -n argocd
+```
+
+If:
+
+```text
+Healthy
+Synced
+```
+
+Current deployment is functioning correctly.
+
+---
+
+# Lessons Learned
+
+* Prometheus Operator requires CRDs before deployment.
+* Server-side apply is required for some large CRDs.
+* PromQL is essential for monitoring and alerting.
+* Alertmanager configuration should always be verified from the running pod.
+* Grafana dashboards provide quick operational visibility.
+* Loki and Promtail enable centralized Kubernetes logging.
+* GitOps simplifies monitoring stack management through ArgoCD.

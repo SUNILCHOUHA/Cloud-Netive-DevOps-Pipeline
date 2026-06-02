@@ -78,3 +78,9 @@ tmpcharts/
 terraform.tfvars
 *.pem
 *.key
+
+
+
+#monitoring secrets
+
+secret.yaml

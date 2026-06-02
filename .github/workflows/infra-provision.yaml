@@ -33,7 +33,7 @@ jobs:
                   
       - name: Terraform Plan
         working-directory: terraform/Infrastructure
-        run: terraform plan -out=tfplan
+        run: terraform plan -var="db_password=${{ secrets.DB_PASSWORD }}" -out=tfplan
 
       - name: Artifact Plan
         uses: actions/upload-artifact@v4

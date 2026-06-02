@@ -35,7 +35,9 @@ spec:
               value: "{{ .Values.database.user }}"
 
             - name: DB_PASSWORD
-              value: "{{ .Values.database.password }}"
-
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret 
+                  key: DB_PASSWORD
             - name: DB_PORT
               value: {{ .Values.database.port | quote }}

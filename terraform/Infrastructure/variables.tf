@@ -7,5 +7,6 @@ variable "db_username" {
 }
 
 variable "db_password" {
-  default = "postgres123"
+  type = string
+  sensitive = true
 }
