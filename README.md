@@ -126,6 +126,10 @@ Infrastructure is provisioned using Terraform.
 * ECR Repository
 * PostgreSQL RDS
 
+### Screenshot
+
+![Core-Infrastructure](docs/images/core-infrastructure.png)
+
 ### Cluster Bootstrap
 
 * ArgoCD Installation
