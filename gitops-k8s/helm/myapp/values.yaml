@@ -1,7 +1,7 @@
 frontend:
   image:
     repository: 364478544576.dkr.ecr.ap-south-1.amazonaws.com/dev-gitops-repo
-    tag: frontend-28c20708214c65bf71d488e387d57a738210daf3
+    tag: frontend-a27e2ae21a12ee87facf56375e4b5729a3cbc288
 
   replicaCount: 1
 
@@ -12,7 +12,7 @@ frontend:
 backend:
   image:
     repository: 364478544576.dkr.ecr.ap-south-1.amazonaws.com/dev-gitops-repo
-    tag: backend-28c20708214c65bf71d488e387d57a738210daf3
+    tag: backend-a27e2ae21a12ee87facf56375e4b5729a3cbc288
 
   replicaCount: 1
 
