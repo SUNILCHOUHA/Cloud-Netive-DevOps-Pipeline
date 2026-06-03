@@ -87,6 +87,11 @@ jobs:
         run: |
           kubectl apply -f .
 
+      - name: Deploy ArgoCD CRDs Server Side
+        working-directory: gitops-k8s/argocd/crds
+        run: |
+          kubectl apply --server-side -f .
+
       - name: RollOut Prometheus Operator
         run: 
           kubectl rollout restart deployment prometheus-kube-prometheus-operator -n monitoring 
