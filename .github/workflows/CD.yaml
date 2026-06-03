@@ -92,10 +92,5 @@ jobs:
         run: |
           kubectl apply --server-side -f .
 
-      - name: RollOut Prometheus Operator
-        run: 
-          kubectl rollout restart deployment prometheus-kube-prometheus-operator -n monitoring 
-
-      
       - name: Verify Applications Health
         run: kubectl get applications -n argocd
