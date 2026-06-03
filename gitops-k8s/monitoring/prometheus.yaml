@@ -28,7 +28,7 @@ spec:
           enabled: true
 
           alertmanagerSpec:
-            configSecret: smtp-secret
+            configSecret: alertmanager-config
   destination: 
     server: https://kubernetes.default.svc 
     namespace: monitoring
